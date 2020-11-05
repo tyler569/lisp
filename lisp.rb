@@ -19,16 +19,34 @@ def sym(v)
   value
 end
 
+def var(state, name)
+  if state[:vars].include? name
+    state[:vars][name]
+  elsif state.include? :upper
+    var(state[:upper], name)
+  end
+end
+
+def type(sexp)
+  sexp[0]
+end
+
+def val(sexp)
+  sexp(1)
+end
+
 def exec_one(sexp, state = default_state)
   puts "#{sexp.inspect} #{state.inspect}"
 
-  return state[:vars][sexp[1]] if sexp[0] == :sym
-  return sexp[1] if sexp[0].is_a? Symbol
+  return state[:vars][val(sexp)] if type(sexp) == :sym
+  return val(sexp) if sexp[0].is_a? Symbol
   assert(sexp[0].is_a? Array)
 
   case sym(sexp[0])
   when "def"
     state[:vars][sexp[1][1]] = exec(sexp.drop(2), state)
+  when "lambda"
+    [:lambda, [], []]
   when "+"
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(0, &:+)
   when "*"
@@ -57,8 +75,10 @@ end
 # 
 # exec(to_lisp(lisp))
 
-state = { vars: {} }
+if __FILE__ == $PROGRAM_NAME
+  state = { vars: {} }
 
-while buf = Readline.readline("> ", true)
-  exec(to_lisp("(print #{buf})"), state)
+  while buf = Readline.readline("> ", true)
+    exec(to_lisp("(print #{buf})"), state)
+  end
 end
