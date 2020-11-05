@@ -27,40 +27,47 @@ def var(state, name)
   end
 end
 
-def type(sexp)
-  sexp[0]
+def eval_lambda(lisp)
+  p [:lambda, lisp[1].map { |t, v| v }, lisp.drop(2)]
 end
 
-def val(sexp)
-  sexp(1)
+def exec_lambda(lam, args, context)
+  p args = Hash[lam[1].zip(args)]
+  p exec_one(lam[2], { upper: context, vars: args })
 end
 
 def exec_one(sexp, state = default_state)
   puts "#{sexp.inspect} #{state.inspect}"
 
-  return state[:vars][val(sexp)] if type(sexp) == :sym
-  return val(sexp) if sexp[0].is_a? Symbol
-  assert(sexp[0].is_a? Array)
-
-  case sym(sexp[0])
-  when "def"
+  case sexp[0]
+  when :int, :str
+    sexp[1]
+  when :sym
+    var(state, sexp[1])
+  when [:sym, "def"]
     state[:vars][sexp[1][1]] = exec(sexp.drop(2), state)
-  when "lambda"
-    [:lambda, [], []]
-  when "+"
+  when [:sym, "lambda"]
+    eval_lambda(sexp)
+  when [:sym, "+"]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(0, &:+)
-  when "*"
+  when [:sym, "*"]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(1, &:*)
-  when "-"
+  when [:sym, "-"]
     exec_one(sexp[1], state) - exec_one(sexp[2], state)
-  when "/"
+  when [:sym, "/"]
     exec_one(sexp[1], state) / exec_one(sexp[2], state)
-  when "="
+  when [:sym, "="]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(&:==)
-  when "print"
+  when [:sym, "print"]
     sexp.drop(1).map { |l| exec_one(l, state) }.map { |v| puts v }
+  when [:sym, "if"]
+    exec_one(sexp[1], state) ? exec_one(sexp[2], state) : exec_one(sexp[3], state)
   else
-    raise "#{sexp} is not executable"
+    exec_lambda(
+      var(state, sexp[0][1]),
+      sexp.drop(1).map { |l| exec_one(l, state) },
+      state
+    )
   end
 end
 
@@ -68,16 +75,17 @@ def exec(lisp, state = default_state)
   lisp.map { |sexp| exec_one(sexp, state) }.last
 end
 
-# lisp = <<EOF
-# (def a (+ 1 1))
-# (print a)
-# EOF
-# 
-# exec(to_lisp(lisp))
 
 if __FILE__ == $PROGRAM_NAME
-  state = { vars: {} }
+  lisp = <<~EOF
+    (def plus-one (lambda (a) (+ a 1)))
+    (print (plus-one 19))
+  EOF
+  exec(to_lisp(lisp))
 
+  exec(p to_lisp("(lambda (a) 1)"))
+
+  state = { vars: {} }
   while buf = Readline.readline("> ", true)
     exec(to_lisp("(print #{buf})"), state)
   end
