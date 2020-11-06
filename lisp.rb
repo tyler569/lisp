@@ -111,7 +111,7 @@ def exec_one(sexp, state = default_state)
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(&:==)
   else
     exec_lambda(
-      exec_one(var(state, sexp[0][1]), state),
+      exec_one(sexp[0], state),
       sexp.drop(1).map { |l| exec_one(l, state) },
       state
     )

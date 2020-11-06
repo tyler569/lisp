@@ -38,6 +38,6 @@ expect("(if some-symbol 1 2)").to_return(1)
 expect("(print 10)").to_print("10\n")
 expect("(print '(1 2 3))").to_print("(1 2 3)\n")
 expect("(print (lambda () 1))").to_print("<lambda>\n")
-# expect("(print ((lambda () 1)))").to_print("1\n")
+expect("(print ((lambda () 1)))").to_print("1\n")
 
 puts
