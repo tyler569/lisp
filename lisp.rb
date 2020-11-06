@@ -47,6 +47,7 @@ def exec_one(sexp, state = default_state)
   STDERR.puts "exec_one    #{sexp.inspect} : #{state.inspect}" if $debug
 
   return unless sexp
+  return nil if sexp == [:sym, "nil"]
 
   case sexp[0]
   when :int, :str
@@ -69,6 +70,8 @@ def exec_one(sexp, state = default_state)
     elsif sexp.length > 3
       exec_one(sexp[3], state)
     end
+  when [:sym, "not"]
+    not exec_one(sexp[1], state)
   when [:sym, "+"]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(0, &:+)
   when [:sym, "*"]
@@ -98,13 +101,14 @@ def exec_lisp(string)
 end
 
 
-if __FILE__ == $PROGRAM_NAME
-  state = { vars: {} }
-  while buf = Readline.readline("> ", true)
-    begin
-      exec_several(to_lisp("(print #{buf})"), state)
-    rescue RuntimeError => e
-      puts e.message
-    end
-  end
-end
+exec_lisp(ARGF.read)
+# if __FILE__ == $PROGRAM_NAME
+#   state = { vars: {} }
+#   while buf = Readline.readline("> ", true)
+#     begin
+#       exec_several(to_lisp("(print #{buf})"), state)
+#     rescue RuntimeError => e
+#       puts e.message
+#     end
+#   end
+# end
