@@ -16,6 +16,11 @@ def capture(&block)
 end
 
 class Expectation
+  @@runs = 0
+  @@passes = 0
+  @@failures = 0
+  @@errors = 0
+
   def initialize(string)
     @expr = string
     begin
@@ -26,18 +31,22 @@ class Expectation
   end
 
   def to_x(statement, verb, test_value, real_value)
+    @@runs += 1
     if test_value != Exception and @exception
       puts
       puts "#{@expr} should #{statement}"
       puts " -> it actually threw".red
+      @@errors += 1
       raise @exception
     end
     if !(test_value === real_value)
       puts
       puts "#{@expr} should #{statement}"
       puts " -> it actually #{verb} #{real_value.inspect}".red
+      @@failures += 1
     else
       print "."
+      @@passes += 1
     end
     self
   end
@@ -58,8 +67,26 @@ class Expectation
     # conjunction junction
     self
   end
+
+  def self.summary
+    [
+      "tests:",
+      "#{@@runs}",
+      "passed:",
+      "#{@@passes}".green,
+      "failed:",
+      "#{@@failures}".red,
+      "errored:",
+      "#{@@errors}".red,
+    ].join " "
+  end
 end
 
 def expect(string)
   Expectation.new(string)
+end
+
+def finish
+  puts
+  puts Expectation.summary
 end
