@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 
 require 'readline'
+require 'optparse'
 require_relative 'parse'
+
+OptionParser.new do |opt|
+  opt.on("--debug") { $debug = true }
+end.parse!
 
 def default_state
   {
@@ -28,26 +33,42 @@ def var(state, name)
 end
 
 def eval_lambda(lisp)
-  p [:lambda, lisp[1].map { |t, v| v }, lisp.drop(2)]
+  STDERR.puts "eval_lambda #{lisp.inspect}" if $debug
+  [:lambda, lisp[1].map { |t, v| v }, lisp.drop(2)]
 end
 
 def exec_lambda(lam, args, context)
-  p args = Hash[lam[1].zip(args)]
-  p exec_one(lam[2], { upper: context, vars: args })
+  STDERR.puts "exec_lambda #{lam.inspect} : #{args.inspect}" if $debug
+  args = Hash[lam[1].zip(args)]
+  exec_several(lam[2], { upper: context, vars: args })
 end
 
 def exec_one(sexp, state = default_state)
-  puts "#{sexp.inspect} #{state.inspect}"
+  STDERR.puts "exec_one    #{sexp.inspect} : #{state.inspect}" if $debug
+
+  return unless sexp
 
   case sexp[0]
   when :int, :str
     sexp[1]
   when :sym
-    var(state, sexp[1])
+    var(state, sexp[1]) || sexp
+  when :lambda
+    sexp
   when [:sym, "def"]
-    state[:vars][sexp[1][1]] = exec(sexp.drop(2), state)
+    state[:vars][sexp[1][1]] = exec_several(sexp.drop(2), state)
   when [:sym, "lambda"]
     eval_lambda(sexp)
+  when [:sym, "print"]
+    sexp.drop(1).map { |l| exec_one(l, state) }.map { |v| puts v }
+  when [:sym, "state"]
+    puts state.inspect
+  when [:sym, "if"]
+    if exec_one(sexp[1], state) 
+      exec_one(sexp[2], state) 
+    elsif sexp.length > 3
+      exec_one(sexp[3], state)
+    end
   when [:sym, "+"]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(0, &:+)
   when [:sym, "*"]
@@ -58,35 +79,32 @@ def exec_one(sexp, state = default_state)
     exec_one(sexp[1], state) / exec_one(sexp[2], state)
   when [:sym, "="]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(&:==)
-  when [:sym, "print"]
-    sexp.drop(1).map { |l| exec_one(l, state) }.map { |v| puts v }
-  when [:sym, "if"]
-    exec_one(sexp[1], state) ? exec_one(sexp[2], state) : exec_one(sexp[3], state)
   else
     exec_lambda(
-      var(state, sexp[0][1]),
+      exec_one(var(state, sexp[0][1]), state),
       sexp.drop(1).map { |l| exec_one(l, state) },
       state
     )
   end
 end
 
-def exec(lisp, state = default_state)
+def exec_several(lisp, state = default_state)
   lisp.map { |sexp| exec_one(sexp, state) }.last
+end
+
+def exec_lisp(string)
+  STDERR.puts "exec_lisp    #{string}" if $debug
+  exec_several(to_lisp(string))
 end
 
 
 if __FILE__ == $PROGRAM_NAME
-  lisp = <<~EOF
-    (def plus-one (lambda (a) (+ a 1)))
-    (print (plus-one 19))
-  EOF
-  exec(to_lisp(lisp))
-
-  exec(p to_lisp("(lambda (a) 1)"))
-
   state = { vars: {} }
   while buf = Readline.readline("> ", true)
-    exec(to_lisp("(print #{buf})"), state)
+    begin
+      exec_several(to_lisp("(print #{buf})"), state)
+    rescue RuntimeError => e
+      puts e.message
+    end
   end
 end
