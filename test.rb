@@ -5,11 +5,11 @@ require_relative 'expect'
 
 # $debug = true
 
-# expect("(+)").to_return(0)
+expect("(+)").to_return(0)
 expect("(+ 1)").to_return(1)
 expect("(+ 1 1)").to_return(2)
 
-# expect("(*)").to_return(1)
+expect("(*)").to_return(1)
 expect("(* 1)").to_return(1)
 expect("(* 1 1)").to_return(1)
 
@@ -36,5 +36,8 @@ expect("(if nil 1 2)").to_return(2)
 expect("(if some-symbol 1 2)").to_return(1)
 
 expect("(print 10)").to_print("10\n")
+expect("(print '(1 2 3))").to_print("(1 2 3)\n")
+expect("(print (lambda () 1))").to_print("<lambda>\n")
+# expect("(print ((lambda () 1)))").to_print("1\n")
 
 puts

@@ -7,7 +7,7 @@ class String
 end
 
 def tokenize(string)
-  string.scan(/\(|\)|[^) \n]+/)
+  string.scan(/\(|\)|'|[^) \n]+/)
 end
 
 def type(token)
@@ -27,6 +27,8 @@ def parse_sexp(tokens, l=0)
     case tok
     when '('
       sexp << parse_sexp(tokens, l+1)
+    when "'"
+      sexp << [:quote, parse_sexp(tokens, l+1)[0]]
     when ')', nil
       return sexp
     else
@@ -49,5 +51,9 @@ if __FILE__ == $PROGRAM_NAME
 
   p to_lisp(<<~EOF)
     (lambda (a) "abc")
+  EOF
+
+  p to_lisp(<<~EOF)
+    '(lambda (a) "abc")
   EOF
 end

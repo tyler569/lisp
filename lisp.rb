@@ -36,6 +36,27 @@ def var(state, name)
   end
 end
 
+def format_lisp(sexp)
+  case sexp
+  when Integer
+    "#{sexp}"
+  when String
+    "\"#{sexp}\""
+  when -> x { x[0] == :sym }
+    ":#{sexp[1]}"
+  when -> x { x[0] == :int }
+    "#{sexp[1]}"
+  when -> x { x[0] == :str }
+    "#{sexp[1]}"
+  when -> x { x[0] == :lambda }
+    "<lambda>"
+  when Array
+    "(#{sexp.map { |s| format_lisp(s) }.join(" ")})"
+  else
+    "?"
+  end
+end
+
 def eval_lambda(lisp)
   STDERR.puts "eval_lambda #{lisp.inspect}" if $debug
   [:lambda, lisp[1].map { |t, v| v }, lisp.drop(2)]
@@ -54,7 +75,7 @@ def exec_one(sexp, state = default_state)
   return nil if sexp == [:sym, "nil"]
 
   case sexp[0]
-  when :int, :str
+  when :int, :str, :quote
     sexp[1]
   when :sym
     var(state, sexp[1]) || sexp
@@ -65,7 +86,7 @@ def exec_one(sexp, state = default_state)
   when [:sym, "lambda"]
     eval_lambda(sexp)
   when [:sym, "print"]
-    sexp.drop(1).map { |l| exec_one(l, state) }.map { |v| puts v }
+    sexp.drop(1).each { |l| puts(format_lisp(exec_one(l, state))) }
   when [:sym, "state"]
     puts state.inspect
   when [:sym, "if"]

@@ -43,11 +43,11 @@ class Expectation
   end
 
   def to_return(value)
-    to_x("return #{value}", "returned", value, @value)
+    to_x("return #{value.inspect}", "returned", value, @value)
   end
 
   def to_print(string)
-    to_x("print #{string}", "printed", string, @stdout)
+    to_x("print #{string.inspect}", "printed", string, @stdout)
   end
 
   def to_fail
