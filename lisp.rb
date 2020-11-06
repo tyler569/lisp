@@ -37,7 +37,12 @@ def var(state, name)
 end
 
 def format_lisp(sexp)
+  STDERR.puts "format_lisp #{sexp.inspect}" if $debug
   case sexp
+  when nil
+    "nil"
+  when []
+    "nil"
   when Integer
     "#{sexp}"
   when String
@@ -73,6 +78,8 @@ def exec_one(sexp, state = default_state)
 
   return unless sexp
   return nil if sexp == [:sym, "nil"]
+  return true if sexp == [:sym, "true"]
+  return false if sexp == [:sym, "false"]
 
   case sexp[0]
   when :int, :str, :quote
@@ -115,6 +122,10 @@ def exec_one(sexp, state = default_state)
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(&:==)
   when [:sym, "cons"]
     [exec_one(sexp[1], state)] + (exec_one(sexp[2], state) || [])
+  when [:sym, "car"]
+    exec_one(sexp[1], state).first
+  when [:sym, "cdr"]
+    exec_one(sexp[1], state).drop(1)
   else
     exec_lambda(
       exec_one(sexp[0], state),

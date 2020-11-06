@@ -60,4 +60,10 @@ expect("(if t (do (print 1) (print 2)) (print 3))").to_print("1\n2\n")
 
 expect("(print (cons 1 '()))").to_print("(1)\n")
 
+expect("(print (car '(1 2 3)))").to_print("1\n")
+expect("(print (cdr '(1 2 3)))").to_print("(2 3)\n")
+expect("(print (car '()))").to_print("nil\n")
+expect("(print (cdr '(1)))").to_print("nil\n")
+expect("(print (cdr '()))").to_print("nil\n")
+
 finish
