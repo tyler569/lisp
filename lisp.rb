@@ -111,6 +111,8 @@ def exec_one(sexp, state = default_state)
     exec_one(sexp[1], state) / exec_one(sexp[2], state)
   when [:sym, "="]
     sexp.drop(1).map { |l| exec_one(l, state) }.reduce(&:==)
+  when [:sym, "cons"]
+    [exec_one(sexp[1], state)] + (exec_one(sexp[2], state) || [])
   else
     exec_lambda(
       exec_one(sexp[0], state),

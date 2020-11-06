@@ -43,4 +43,6 @@ expect("(print ((lambda () 1)))").to_print("1\n")
 expect("(do 1 2)").to_return(2)
 expect("(if t (do (print 1) (print 2)) (print 3))").to_print("1\n2\n")
 
+expect("(print (cons 1 '()))").to_print("(1)\n")
+
 puts
