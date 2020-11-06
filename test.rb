@@ -13,6 +13,21 @@ expect("(*)").to_return(1)
 expect("(* 1)").to_return(1)
 expect("(* 1 1)").to_return(1)
 
+expect("(-)").to_fail
+expect("(- 10)").to_fail
+expect("(- 10 9)").to_return(1)
+
+expect("(/)").to_fail
+expect("(/ 10)").to_fail
+expect("(/ 10 10)").to_return(1)
+
+expect("(%)").to_fail
+expect("(% 10)").to_fail
+expect("(% 10 10)").to_return(0)
+expect("(% 11 10)").to_return(1)
+expect("(% 12 10)").to_return(2)
+expect("(% 13 10)").to_return(3)
+
 expect("(foobar)").to_fail
 
 expect(<<EOF).to_return(10)
