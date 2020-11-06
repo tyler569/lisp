@@ -4,8 +4,12 @@ require 'readline'
 require 'optparse'
 require_relative 'parse'
 
+options = {}
+
 OptionParser.new do |opt|
-  opt.on("--debug") { $debug = true }
+  opt.on("--debug", "print debug information") { $debug = true }
+  opt.on("--stdin", "read program from stdin") { options[:stdin] = true }
+  opt.on("-f", "--file FILE", "read program from file") { |v| options[:file] = v }
 end.parse!
 
 def default_state
@@ -70,6 +74,8 @@ def exec_one(sexp, state = default_state)
     elsif sexp.length > 3
       exec_one(sexp[3], state)
     end
+  when [:sym, "exit"]
+    exit 0
   when [:sym, "not"]
     not exec_one(sexp[1], state)
   when [:sym, "+"]
@@ -101,14 +107,17 @@ def exec_lisp(string)
 end
 
 
-exec_lisp(ARGF.read)
-# if __FILE__ == $PROGRAM_NAME
-#   state = { vars: {} }
-#   while buf = Readline.readline("> ", true)
-#     begin
-#       exec_several(to_lisp("(print #{buf})"), state)
-#     rescue RuntimeError => e
-#       puts e.message
-#     end
-#   end
-# end
+if options[:stdin]
+  exec_lisp(ARGF.read)
+elsif options[:file]
+  exec_lisp(File.read(options[:file]))
+elsif __FILE__ == $PROGRAM_NAME
+  state = { vars: {} }
+  while buf = Readline.readline("> ", true)
+    begin
+      exec_several(to_lisp("(print #{buf})"), state)
+    rescue RuntimeError => e
+      puts e.message
+    end
+  end
+end

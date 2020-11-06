@@ -32,6 +32,8 @@ EOF
 
 expect("(if (= 1 1) 1 2)").to_return(1)
 expect("(if (= 1 2) 1 2)").to_return(2)
+expect("(if nil 1 2)").to_return(2)
+expect("(if some-symbol 1 2)").to_return(1)
 
 expect("(print 10)").to_print("10\n")
 
