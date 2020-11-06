@@ -95,6 +95,8 @@ def exec_one(sexp, state = default_state)
     elsif sexp.length > 3
       exec_one(sexp[3], state)
     end
+  when [:sym, "do"]
+    exec_several(sexp.drop(1), state)
   when [:sym, "exit"]
     exit 0
   when [:sym, "not"]
