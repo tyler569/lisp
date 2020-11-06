@@ -7,7 +7,7 @@ class String
 end
 
 def tokenize(string)
-  string.scan(/\(|\)|'|[^) \n]+/)
+  string.scan(/\(|\)|'|[^) ;\n]+|;.+\z/)
 end
 
 def type(token)
@@ -25,6 +25,8 @@ def parse_sexp(tokens, l=0)
   loop do
     tok = tokens.shift
     case tok
+    when -> t { t and t[0] == ';' }
+      next # comment
     when '('
       sexp << parse_sexp(tokens, l+1)
     when "'"
