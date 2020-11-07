@@ -37,7 +37,7 @@ def var(state, name)
 end
 
 def format_lisp(sexp)
-  STDERR.puts "format_lisp #{sexp.inspect}" if $debug
+  # STDERR.puts "format_lisp #{sexp.inspect}" if $debug
   case sexp
   when nil
     "nil"
@@ -48,13 +48,15 @@ def format_lisp(sexp)
   when String
     "\"#{sexp}\""
   when -> x { x[0] == :sym }
-    ":#{sexp[1]}"
+    "#{sexp[1]}"
   when -> x { x[0] == :int }
     "#{sexp[1]}"
   when -> x { x[0] == :str }
-    "#{sexp[1]}"
+    "\"#{sexp[1]}\""
   when -> x { x[0] == :lambda }
     "<lambda>"
+  when -> x { x[0] == :quote }
+    "'#{format_lisp(sexp[1])}"
   when Array
     "(#{sexp.map { |s| format_lisp(s) }.join(" ")})"
   else
@@ -63,21 +65,22 @@ def format_lisp(sexp)
 end
 
 def eval_lambda(lisp)
-  STDERR.puts "eval_lambda #{lisp.inspect}" if $debug
+  STDERR.puts "eval_lambda #{format_lisp(lisp)}" if $debug
   [:lambda, lisp[1].map { |t, v| v }, lisp.drop(2)]
 end
 
 def exec_lambda(lam, args, context)
-  STDERR.puts "exec_lambda #{lam.inspect} : #{args.inspect}" if $debug
+  STDERR.puts "exec_lambda #{format_lisp(lam)} : #{args.inspect}" if $debug
   args = Hash[lam[1].zip(args)]
   exec_several(lam[2], { upper: context, vars: args })
 end
 
 def exec_one(sexp, state = default_state)
-  STDERR.puts "exec_one    #{sexp.inspect} : #{state.inspect}" if $debug
+  STDERR.puts "exec_one    #{format_lisp(sexp)} : #{state.inspect}" if $debug
 
   return unless sexp
   return nil if sexp == [:sym, "nil"]
+  return nil if sexp == []
   return true if sexp == [:sym, "true"]
   return false if sexp == [:sym, "false"]
 

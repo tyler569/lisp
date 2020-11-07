@@ -66,4 +66,10 @@ expect("(print (car '()))").to_print("nil\n")
 expect("(print (cdr '(1)))").to_print("nil\n")
 expect("(print (cdr '()))").to_print("nil\n")
 
+expect(<<EOF).to_return(10)
+(def foo (lambda (a) a))
+(def a 10)
+(foo a)
+EOF
+
 finish
